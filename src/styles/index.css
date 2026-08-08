@@ -30,23 +30,23 @@
 
   /* Theme 3: bletchley-cipher (WWII Radar Oscilloscope) */
   [data-theme="bletchley-cipher"] {
-    --bg-main: #101412;
-    --bg-panel: #161d1a;
-    --text-untyped: #334d40;
-    --text-correct: #39ff14;
-    --text-error: #ff1744;
-    --glow-color: #39ff14;
-    --border-accent: #9e8043;
+    --bg-main: #0f0e0a; /* Darkened brass-bakelite casing */
+    --bg-panel: #16140e; /* Golden cathode tube pane */
+    --text-untyped: #5c5238; /* Dim phosphor gold */
+    --text-correct: #ffd700; /* Bright gold cathode sweep trace */
+    --text-error: #ff2a4b; /* Signal anomaly emergency crimson */
+    --glow-color: #ffd700; /* Gold cathode halation bloom */
+    --border-accent: #8c733e; /* Brushed brass rule */
   }
 
   /* Theme 4: monastic-ledger (Scriptorium Codex) */
   [data-theme="monastic-ledger"] {
     --bg-main: #14110e;
     --bg-panel: #f4ece1;
-    --text-untyped: #998d7c;
+    --text-untyped: #7a6f60;
     --text-correct: #a62424;
-    --text-error: #403028;
-    --glow-color: #a62424;
+    --text-error: #5c1d1d;
+    --glow-color: transparent;
     --border-accent: #c9a24b;
   }
 
@@ -59,6 +59,14 @@
     --text-error: #ff2e63;
     --glow-color: #00e5ff;
     --border-accent: #ff2e63;
+  }
+
+  .font-vt323 {
+    font-family: "VT323", monospace;
+  }
+
+  .font-jetbrains {
+    font-family: "JetBrains Mono", monospace;
   }
 
   body {
@@ -78,8 +86,8 @@
 /* CRT Halation Glow Effect */
 .crt-glow {
   text-shadow:
-    0 0 6px var(--glow-color),
-    0 0 12px var(--glow-color);
+    0 0 0.2em var(--glow-color),
+    0 0 0.45em var(--glow-color);
 }
 
 /* Fixed CRT Scanline Overlay */

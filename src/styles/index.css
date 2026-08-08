@@ -1,0 +1,116 @@
+@import "tailwindcss";
+@layer base {
+  /* ==========================================================================
+         TYPEDESK 5-THEME MATERIAL SWITCHER TOKEN ARCHITECTURE
+         Mapped directly to data-theme on <html> for 0-JS render style recalculations
+         ========================================================================== */
+
+  /* Theme 1: fallout-green (Default - RobCo Phosphor CRT) */
+  :root,
+  [data-theme="fallout-green"] {
+    --bg-main: #080c0a;
+    --bg-panel: #0e1410;
+    --text-untyped: #2d4f38;
+    --text-correct: #00ff66;
+    --text-error: #ff2a4b;
+    --glow-color: #00ff66;
+    --border-accent: #1e3a28;
+  }
+
+  /* Theme 2: wyse-amber (Wyse 50 Amber CRT) */
+  [data-theme="wyse-amber"] {
+    --bg-main: #0c0a07;
+    --bg-panel: #14100c;
+    --text-untyped: #543d1a;
+    --text-correct: #ffb000;
+    --text-error: #ff3300;
+    --glow-color: #ffb000;
+    --border-accent: #3b2b15;
+  }
+
+  /* Theme 3: bletchley-cipher (WWII Radar Oscilloscope) */
+  [data-theme="bletchley-cipher"] {
+    --bg-main: #101412;
+    --bg-panel: #161d1a;
+    --text-untyped: #334d40;
+    --text-correct: #39ff14;
+    --text-error: #ff1744;
+    --glow-color: #39ff14;
+    --border-accent: #9e8043;
+  }
+
+  /* Theme 4: monastic-ledger (Scriptorium Codex) */
+  [data-theme="monastic-ledger"] {
+    --bg-main: #14110e;
+    --bg-panel: #f4ece1;
+    --text-untyped: #998d7c;
+    --text-correct: #a62424;
+    --text-error: #403028;
+    --glow-color: #a62424;
+    --border-accent: #c9a24b;
+  }
+
+  /* Theme 5: cyberpunk-edo (Neon Edo Ukiyo-e) */
+  [data-theme="cyberpunk-edo"] {
+    --bg-main: #0d0f14;
+    --bg-panel: #161b24;
+    --text-untyped: #4a586e;
+    --text-correct: #00e5ff;
+    --text-error: #ff2e63;
+    --glow-color: #00e5ff;
+    --border-accent: #ff2e63;
+  }
+
+  body {
+    font-family: "JetBrains Mono", monospace;
+    background-color: var(--bg-main);
+    color: var(--text-correct);
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+}
+
+/* ==========================================================================
+       TACTILE CRT UTILITIES (Scanlines, Cathode Halation Glow & Caret Blink)
+       ========================================================================== */
+
+/* CRT Halation Glow Effect */
+.crt-glow {
+  text-shadow:
+    0 0 6px var(--glow-color),
+    0 0 12px var(--glow-color);
+}
+
+/* Fixed CRT Scanline Overlay */
+.crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.18),
+    rgba(0, 0, 0, 0.18) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  pointer-events: none;
+}
+
+/* Screen Vignette Glass Curvature */
+.crt-vignette {
+  background: radial-gradient(circle, transparent 65%, rgba(0, 0, 0, 0.75) 100%);
+  pointer-events: none;
+}
+
+/* Custom Blinking Block Caret (530ms cycle) */
+@keyframes caret-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.animate-caret-blink {
+  animation: caret-blink 1.06s steps(1) infinite;
+}

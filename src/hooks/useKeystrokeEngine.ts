@@ -233,8 +233,8 @@ export function useKeystrokeEngine({
           const nextCIdx = cIdx + 1;
           setCurrentCharIdx(nextCIdx);
           setWordMatrix(matrix);
-        } else if (cIdx < currentWord.originalText.length + 10) {
-          // Append extra typed character beyond word length (max 10 extra chars)
+        } else if (cIdx < currentWord.originalText.length + 5) {
+          // Append extra typed character beyond word length (max 5 extra chars)
           chars.push({
             id: `w${wIdx}-extra-${cIdx}-${key}`,
             char: key,

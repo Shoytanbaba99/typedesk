@@ -155,6 +155,8 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
         <Caret
           x={caretPos.x}
           y={caretPos.y}
+          width={metrics.charWidth}
+          height={metrics.lineHeight}
           isIdle={!isTestStarted}
           isVisible={!isPaused && !isTestFinished}
           disableTransition={disableCaretTransition}
@@ -169,7 +171,9 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
             >
               {group.words.map((item, itemIdx) => (
                 <React.Fragment key={item.wordData.wordId}>
-                  {itemIdx > 0 && <span className="inline-block font-mono select-none"> </span>}
+                  {itemIdx > 0 && (
+                    <span className="inline-block font-mono whitespace-pre select-none">{" "}</span>
+                  )}
                   <Word
                     id={`w-${item.wordData.wordId}`}
                     characters={item.wordData.characters}
@@ -261,7 +265,7 @@ function computeCaretCoordinates(
     }
 
     if (w === wordIdx) {
-      const activeCol = col + charIdx;
+      const activeCol = Math.min(col + charIdx, maxCols - 1);
       return {
         x: activeCol * charWidth,
         y: line * lineHeight,

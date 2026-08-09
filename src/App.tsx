@@ -6,6 +6,7 @@ import { StatsBar } from "./components/terminal/StatsBar";
 import { ModeSelector, type ModeSettings } from "./components/settings/ModeSelector";
 import { CustomTextModal } from "./components/settings/CustomTextModal";
 import { BootSequence } from "./components/terminal/BootSequence";
+import { AmbientAtmosphere } from "./components/terminal/AmbientAtmosphere";
 import { ResultsModal } from "./components/analytics/ResultsModal";
 import type { WpmHistoryPoint } from "./components/analytics/WpmPolylineGraph";
 import { useKeystrokeEngine, type WordMatrixState } from "./hooks/useKeystrokeEngine";
@@ -157,7 +158,10 @@ function App() {
   }, [isTestStarted, isTestFinished, elapsedSeconds, wpm, rawWpm]);
 
   return (
-    <main className="min-h-dvh bg-(--bg-main) flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative">
+    <main className="min-h-dvh bg-(--bg-main) flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative overflow-hidden">
+      {/* Procedural 60fps Ambient Background Atmosphere Engine (0% CPU) */}
+      <AmbientAtmosphere />
+
       {/* Subtle CRT 60Hz Refresh Micro Flicker Overlay (pointer-events-none) */}
       <div className="fixed inset-0 crt-flicker pointer-events-none z-40" aria-hidden={true} />
 

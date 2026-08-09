@@ -18,7 +18,7 @@ export const Caret: React.FC<CaretProps> = React.memo(
     return (
       <span
         className={`
-            absolute top-0 left-0 w-[0.6em] h-[1.1em] bg-(--text-correct) crt-glow pointer-events-none z-20
+            absolute top-4 left-4 w-[0.6em] h-[1.1em] bg-(--text-correct) crt-glow pointer-events-none z-20
             ${isVisible ? (isIdle ? "animate-caret-blink opacity-100" : "opacity-100") : "opacity-0"}
           `}
         style={{

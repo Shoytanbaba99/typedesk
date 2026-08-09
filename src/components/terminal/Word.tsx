@@ -21,9 +21,9 @@ export const Word: React.FC<WordProps> = React.memo(({ characters, hasError = fa
   return (
     <span
       className={`
-            inline-flex items-center gap-px px-1 py-0.5 rounded transition-colors duration-150
-            ${hasError ? "border-b border-(--text-error)/40" : ""}
-          `}
+        inline-flex items-center transition-colors duration-150
+        ${hasError ? "border-b border-(--text-error)/40" : ""}
+      `}
     >
       {characters.map((letterData) => (
         <Letter

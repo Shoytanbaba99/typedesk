@@ -1,6 +1,7 @@
-import React, { useRef, useEffect, useState, useLayoutEffect } from "react";
-import { Word, WordMatrixState } from "./Word";
+import React, { useRef, useState, useLayoutEffect, useMemo } from "react";
+import { Word } from "./Word";
 import { Caret } from "./Caret";
+import type { WordMatrixState } from "../../hooks/useKeystrokeEngine";
 
 interface TypingAreaProps {
   wordMatrix: WordMatrixState[];
@@ -12,10 +13,21 @@ interface TypingAreaProps {
   onResume?: () => void;
 }
 
+interface LineGroup {
+  lineIndex: number;
+  words: {
+    wordData: WordMatrixState;
+    wordIdx: number;
+  }[];
+}
+
+// Shared typography classes to guarantee font size and line height match 100% between measurement span & line rows
+const TERMINAL_TEXT_STYLE = "font-mono text-xl sm:text-2xl leading-relaxed";
+
 /**
  * TypingArea
- * 100% Pure Zero-Reflow Terminal Viewport.
- * Uses pre-measured monospace character cell math for instant, 0-reflow gliding caret coordinates.
+ * 100% Pure Zero-Reflow Terminal Viewport with Pre-Broken Line Rendering.
+ * Guarantees DOM Layout === Arithmetic Caret Engine (0 reflows, 0 caret drift, 0 cascading renders).
  */
 export const TypingArea: React.FC<TypingAreaProps> = ({
   wordMatrix,
@@ -29,38 +41,45 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
 
-  // Caret coordinate state
-  const [caretPos, setCaretPos] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [disableCaretTransition, setDisableCaretTransition] = useState<boolean>(false);
-  const prevLineRef = useRef<number>(0);
-
   // Pre-measured font cell and container metrics
-  const metricsRef = useRef<{ charWidth: number; lineHeight: number; maxCols: number }>({
+  const [metrics, setMetrics] = useState<{
+    charWidth: number;
+    lineHeight: number;
+    maxCols: number;
+  }>({
     charWidth: 14.4,
     lineHeight: 36,
     maxCols: 50,
   });
+  const metricsRef = useRef(metrics);
 
   // 1. Measure font cell and container width ONCE on mount & resize
   useLayoutEffect(() => {
     const updateMetrics = () => {
       if (measureRef.current && containerRef.current) {
         const charRect = measureRef.current.getBoundingClientRect();
-        const containerWidth = containerRef.current.clientWidth - 32; // Subtract padding
+        const containerWidth = containerRef.current.clientWidth - 32; // Subtract p-4 padding (16px * 2)
 
         if (charRect.width > 0 && charRect.height > 0 && containerWidth > 0) {
           const charWidth = charRect.width;
           const lineHeight = charRect.height;
           const maxCols = Math.max(10, Math.floor(containerWidth / charWidth));
 
-          metricsRef.current = { charWidth, lineHeight, maxCols };
+          if (
+            charWidth !== metricsRef.current.charWidth ||
+            lineHeight !== metricsRef.current.lineHeight ||
+            maxCols !== metricsRef.current.maxCols
+          ) {
+            const nextMetrics = { charWidth, lineHeight, maxCols };
+            metricsRef.current = nextMetrics;
+            setMetrics(nextMetrics);
+          }
         }
       }
     };
 
     updateMetrics();
 
-    // Listen to container resize to update maxCols on browser window resize
     const resizeObserver = new ResizeObserver(updateMetrics);
     if (containerRef.current) {
       resizeObserver.observe(containerRef.current);
@@ -69,9 +88,14 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // 2. Pure Arithmetic Caret Position Calculation on Keypress (0 DOM Reads!)
-  useEffect(() => {
-    const { charWidth, lineHeight, maxCols } = metricsRef.current;
+  // 2. Pre-break word matrix into lines so DOM layout matches arithmetic engine perfectly
+  const lineGroups = useMemo(() => {
+    return breakMatrixIntoLines(wordMatrix, metrics.maxCols);
+  }, [wordMatrix, metrics.maxCols]);
+
+  // 3. Pure Arithmetic Caret Position Calculation derived in-render
+  const { caretPos, line } = useMemo(() => {
+    const { charWidth, lineHeight, maxCols } = metrics;
 
     const { x, y, line } = computeCaretCoordinates(
       wordMatrix,
@@ -82,58 +106,87 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
       lineHeight,
     );
 
-    // If line index changed (line wrap), disable transition for 1 frame tick to avoid diagonal slide
-    if (line !== prevLineRef.current) {
-      setDisableCaretTransition(true);
-      prevLineRef.current = line;
-    } else {
-      setDisableCaretTransition(false);
-    }
+    return { caretPos: { x, y }, line };
+  }, [wordMatrix, currentWordIdx, currentCharIdx, metrics]);
 
-    setCaretPos({ x, y });
-  }, [wordMatrix, currentWordIdx, currentCharIdx]);
+  // 4. Render-phase state adjustment pattern (0 refs read in render, 0 effects)
+  const [prevLine, setPrevLine] = useState<number>(line);
+  const disableCaretTransition = line !== prevLine;
+
+  if (line !== prevLine) {
+    setPrevLine(line);
+  }
+
+  const VISIBLE_LINES = 3;
+
+  // Clamped vertical scrolling offset (keeps active line centered in 3-line viewport)
+  const maxScrollOffset = Math.max(0, (lineGroups.length - VISIBLE_LINES) * metrics.lineHeight);
+  const rawScrollOffset = Math.max(0, line - 1) * metrics.lineHeight;
+  const lineScrollOffset = Math.min(rawScrollOffset, maxScrollOffset);
+  const containerHeight = metrics.lineHeight * VISIBLE_LINES + 32; // 3 lines + 32px padding
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full min-h-[160px] p-4 font-mono select-none overflow-hidden"
+      className="relative w-full p-4 font-mono select-none overflow-hidden"
+      style={{ height: `${containerHeight}px` }}
+      aria-label="Terminal typing workspace"
     >
       {/* Hidden character span used ONLY for initial font metric measurement */}
       <span
         ref={measureRef}
-        className="absolute top-0 left-0 opacity-0 pointer-events-none font-mono text-xl sm:text-2xl"
+        className={`absolute top-0 left-0 opacity-0 pointer-events-none ${TERMINAL_TEXT_STYLE}`}
         aria-hidden={true}
       >
         M
       </span>
 
-      {/* Gliding Caret */}
-      <Caret
-        x={caretPos.x}
-        y={caretPos.y}
-        isIdle={!isTestStarted}
-        isVisible={!isPaused && !isTestFinished}
-        disableTransition={disableCaretTransition}
-      />
+      {/* Smoothly Scrolling Line Workspace */}
+      <div
+        className="relative w-full"
+        style={{
+          transform: `translate3d(0, -${lineScrollOffset}px, 0)`,
+          transition: disableCaretTransition
+            ? "none"
+            : "transform 85ms cubic-bezier(0.2, 0, 0, 1)",
+        }}
+      >
+        {/* Gliding Caret */}
+        <Caret
+          x={caretPos.x}
+          y={caretPos.y}
+          isIdle={!isTestStarted}
+          isVisible={!isPaused && !isTestFinished}
+          disableTransition={disableCaretTransition}
+        />
 
-      {/* Word Matrix Container */}
-      <div className="flex flex-wrap gap-x-3 gap-y-2 text-xl sm:text-2xl leading-relaxed">
-        {wordMatrix.map((wordData) => (
-          <Word
-            key={wordData.wordId}
-            id={`w-${wordData.wordId}`}
-            characters={wordData.characters}
-            hasError={wordData.hasError}
-          />
-        ))}
+        {/* Pre-Broken Lines Matrix Container */}
+        <div className="flex flex-col">
+          {lineGroups.map((group) => (
+            <div
+              key={`line-${group.lineIndex}`}
+              className={`flex flex-row items-center ${TERMINAL_TEXT_STYLE}`}
+            >
+              {group.words.map((item, itemIdx) => (
+                <React.Fragment key={item.wordData.wordId}>
+                  {itemIdx > 0 && <span className="inline-block font-mono select-none"> </span>}
+                  <Word
+                    id={`w-${item.wordData.wordId}`}
+                    characters={item.wordData.characters}
+                    hasError={item.wordData.hasError}
+                  />
+                </React.Fragment>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Pause Overlay (Appears on Tab Blur / Window Loss) */}
+      {/* Pause Overlay */}
       {isPaused && (
         <div
           onClick={onResume}
-          className="absolute inset-0 bg-(--bg-panel)/90 backdrop-blur-xs z-30 flex flex-col items-center
-  justify-center gap-3 cursor-pointer"
+          className="absolute inset-0 bg-(--bg-panel)/90 backdrop-blur-xs z-30 flex flex-col items-center justify-center gap-3 cursor-pointer"
         >
           <p className="text-xl sm:text-2xl font-bold text-(--text-correct) crt-glow animate-pulse">
             [TEST PAUSED]
@@ -146,6 +199,36 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
     </div>
   );
 };
+
+/**
+ * breakMatrixIntoLines
+ * Pre-computes line row grouping using exact integer column counts.
+ */
+function breakMatrixIntoLines(matrix: WordMatrixState[], maxCols: number): LineGroup[] {
+  if (matrix.length === 0 || maxCols <= 0) return [];
+
+  const lines: LineGroup[] = [{ lineIndex: 0, words: [] }];
+  let currentLine = 0;
+  let col = 0;
+
+  for (let w = 0; w < matrix.length; w++) {
+    const wordLen = matrix[w].characters.length;
+    const neededCols = col === 0 ? wordLen : wordLen + 1;
+
+    if (col > 0 && col + neededCols > maxCols) {
+      currentLine++;
+      col = 0;
+      lines.push({ lineIndex: currentLine, words: [] });
+    } else if (col > 0) {
+      col += 1;
+    }
+
+    lines[currentLine].words.push({ wordData: matrix[w], wordIdx: w });
+    col += wordLen;
+  }
+
+  return lines;
+}
 
 /**
  * computeCaretCoordinates

@@ -14,30 +14,43 @@ const BOOT_LINES = [
 
 /**
  * BootSequence
- * RobCo CRT 1.2-second retro power-on cathode expansion & diagnostic boot animation.
- * Requires 0 engine logic changes and auto-dismisses on completion.
+ * Retro character-by-character typewriter RobCo CRT diagnostic boot sequence.
+ * Auto-dismisses on completion.
  */
 export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
-  const [displayedLines, setDisplayedLines] = useState<string[]>([]);
+  const [completedLines, setCompletedLines] = useState<string[]>([]);
+  const [currentLineText, setCurrentLineText] = useState<string>("");
+  const [currentLineIndex, setCurrentLineIndex] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      if (index < BOOT_LINES.length) {
-        setDisplayedLines((prev) => [...prev, BOOT_LINES[index]]);
-        index++;
-      } else {
-        clearInterval(interval);
-        setTimeout(() => {
-          setIsFinished(true);
-          setTimeout(onComplete, 350);
-        }, 300);
-      }
-    }, 160);
+    if (currentLineIndex >= BOOT_LINES.length) {
+      const finishTimeout = setTimeout(() => {
+        setIsFinished(true);
+        setTimeout(onComplete, 350);
+      }, 400);
+      return () => clearTimeout(finishTimeout);
+    }
 
-    return () => clearInterval(interval);
-  }, [onComplete]);
+    const fullText = BOOT_LINES[currentLineIndex];
+    let charIdx = 0;
+
+    const charTimer = setInterval(() => {
+      if (charIdx <= fullText.length) {
+        setCurrentLineText(fullText.slice(0, charIdx));
+        charIdx++;
+      } else {
+        clearInterval(charTimer);
+        setTimeout(() => {
+          setCompletedLines((prev) => [...prev, fullText]);
+          setCurrentLineText("");
+          setCurrentLineIndex((prev) => prev + 1);
+        }, 120);
+      }
+    }, 22);
+
+    return () => clearInterval(charTimer);
+  }, [currentLineIndex, onComplete]);
 
   return (
     <div
@@ -47,11 +60,17 @@ export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
     >
       <div className="max-w-lg w-full bg-(--bg-panel) border-2 border-(--border-accent) rounded-lg p-6 shadow-2xl animate-power-on">
         <div className="flex flex-col gap-2 text-xs sm:text-sm text-(--text-correct) crt-glow">
-          {displayedLines.map((line, i) => (
+          {completedLines.map((line, i) => (
             <p key={i} className="tracking-wide">
               {line}
             </p>
           ))}
+          {currentLineIndex < BOOT_LINES.length && (
+            <p className="tracking-wide flex items-center">
+              <span>{currentLineText}</span>
+              <span className="inline-block w-2 h-4 bg-(--text-correct) ml-0.5 animate-pulse" />
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -133,6 +133,27 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
   const lineScrollOffset = Math.min(rawScrollOffset, maxScrollOffset);
   const containerHeight = metrics.lineHeight * VISIBLE_LINES + 32; // 3 lines + 32px padding
 
+  // Handle mobile software keyboard input seamlessly (iOS Safari & Android Chrome)
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (!val) return;
+
+    for (let i = 0; i < val.length; i++) {
+      const char = val[i];
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: char, bubbles: true }));
+    }
+
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.value = "";
+    }
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" || e.key === " ") {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true }));
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -141,19 +162,19 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
       style={{ height: `${containerHeight}px` }}
       aria-label="Terminal typing workspace"
     >
-      {/* Hidden input used ONLY to trigger mobile software keyboard on touch */}
+      {/* Hidden input to trigger and process mobile software virtual keyboards */}
       <input
         ref={hiddenInputRef}
         type="text"
-        className="absolute top-0 left-0 opacity-0 pointer-events-none w-0 h-0 -z-10"
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-0"
         autoCapitalize="none"
         autoCorrect="off"
         spellCheck={false}
         autoComplete="off"
         tabIndex={-1}
         aria-label="Mobile software keyboard trigger"
-        value=""
-        onChange={() => {}}
+        onChange={handleInputChange}
+        onKeyDown={handleInputKeyDown}
       />
 
       {/* Hidden character span used ONLY for initial font metric measurement */}

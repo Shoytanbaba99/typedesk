@@ -1,26 +1,48 @@
-import { useState, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { TerminalContainer } from "./components/terminal/TerminalContainer";
 import { TerminalHeader } from "./components/terminal/TerminalHeader";
 import { TypingArea } from "./components/terminal/TypingArea";
 import { StatsBar } from "./components/terminal/StatsBar";
+import { ModeSelector, type ModeSettings } from "./components/settings/ModeSelector";
+import { CustomTextModal } from "./components/settings/CustomTextModal";
+import { BootSequence } from "./components/terminal/BootSequence";
 import { useKeystrokeEngine, type WordMatrixState } from "./hooks/useKeystrokeEngine";
 import { usePerformanceTimer } from "./hooks/usePerformanceTimer";
-
-// Expanded terminal dictionary to ensure multi-line scrolling session (60 words)
-const EXPANDED_WORDS = [
-  "the", "quick", "brown", "fox", "jumps", "over", "the", "lazy", "dog",
-  "fallout", "terminal", "phosphor", "green", "wyse", "amber", "bletchley",
-  "cipher", "keystroke", "engine", "monospaced", "arithmetic", "performance",
-  "zero", "reflow", "interaction", "next", "paint", "submillisecond", "react",
-  "typescript", "vite", "component", "isolation", "state", "immutability",
-  "monotonic", "timer", "animation", "frame", "viewport", "scrolling",
-  "matrix", "character", "precision", "tactile", "feedback", "glow",
-  "scanline", "vignette", "theme", "switcher", "custom", "properties",
-  "fallout", "robcop", "industrial", "console", "speed", "test", "session"
-];
+import {
+  generateWords,
+  getQuoteByTier,
+  quoteToWords,
+  MAX_CUSTOM_WORDS,
+} from "./utils/wordGenerator";
 
 function App() {
-  const [wordsList] = useState<string[]>(EXPANDED_WORDS);
+  const [modeSettings, setModeSettings] = useState<ModeSettings>({
+    category: "time",
+    time: 30,
+    words: 25,
+    quote: "medium",
+  });
+  const [sessionKey, setSessionKey] = useState<number>(0);
+  const [customWords, setCustomWords] = useState<string[] | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isBooting, setIsBooting] = useState<boolean>(true);
+  const [truncationNotice, setTruncationNotice] = useState<string | null>(null);
+
+  // Compute active word list matching mode selection or custom input
+  const wordsList = useMemo(() => {
+    if (customWords && customWords.length > 0) {
+      return customWords;
+    }
+    if (modeSettings.category === "quote") {
+      const quote = getQuoteByTier(modeSettings.quote);
+      return quoteToWords(quote);
+    }
+    const count = modeSettings.category === "words" ? modeSettings.words : 50;
+    return generateWords(count);
+  }, [modeSettings, customWords]);
+
+  // Target test duration (0 for word count or quote mode)
+  const targetDuration = modeSettings.category === "time" ? modeSettings.time : 0;
 
   // High-precision monotonic timer hook
   const {
@@ -30,33 +52,117 @@ function App() {
     isPaused,
     startTimer,
     resumeTimer,
-  } = usePerformanceTimer({ duration: 30 }); // 30-second default test mode
-
-  // Keystroke event engine hook
-  const {
-    wordMatrix,
-    currentWordIdx,
-    currentCharIdx,
-    isTestStarted,
-    isTestFinished,
-  } = useKeystrokeEngine({
-    wordsList,
-    onFirstKeystroke: startTimer,
+    resetTimer,
+  } = usePerformanceTimer({
+    duration: targetDuration,
   });
 
-  // Derived live WPM and Accuracy metrics
-  const { wpm, accuracy } = useMemo(() => {
+  // Keystroke event engine hook
+  const { wordMatrix, currentWordIdx, currentCharIdx, isTestStarted, isTestFinished, resetEngine } =
+    useKeystrokeEngine({
+      wordsList,
+      sessionKey,
+      isModalOpen: isModalOpen || isBooting,
+      onFirstKeystroke: startTimer,
+      onRestart: () => restartTest(),
+    });
+
+  // Reset entire test session (defined AFTER resetEngine & resetTimer are initialized)
+  const restartTest = useCallback(() => {
+    resetTimer();
+    resetEngine();
+    setSessionKey((prev) => prev + 1);
+  }, [resetTimer, resetEngine]);
+
+  // Hydrate initial mode settings from localStorage on mount (state-only, no restart side-effects)
+  const handleHydrate = useCallback((initialSettings: ModeSettings) => {
+    setModeSettings(initialSettings);
+  }, []);
+
+  // Handle user-initiated ModeSelector changes (updates settings AND restarts test)
+  const handleSettingsChange = useCallback(
+    (newSettings: ModeSettings) => {
+      setModeSettings(newSettings);
+      setCustomWords(null);
+      setTruncationNotice(null);
+      restartTest();
+    },
+    [restartTest],
+  );
+
+  // Handle Custom Text Ingestion
+  const handleApplyCustomText = useCallback(
+    (words: string[], truncated: boolean) => {
+      setCustomWords(words);
+      if (truncated) {
+        setTruncationNotice(
+          `[NOTICE] Custom text exceeded ${MAX_CUSTOM_WORDS} words. Truncated to ${MAX_CUSTOM_WORDS} words.`,
+        );
+      } else {
+        setTruncationNotice(null);
+      }
+      restartTest();
+    },
+    [restartTest],
+  );
+
+  // Derived live WPM, Raw WPM, and Accuracy metrics (PRD Section 5)
+  const { wpm, rawWpm, accuracy } = useMemo(() => {
     return computeLiveStats(wordMatrix, elapsedSeconds);
   }, [wordMatrix, elapsedSeconds]);
 
   return (
-    <main className="min-h-screen bg-(--bg-main) flex items-center justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200">
+    <main className="min-h-screen bg-(--bg-main) flex items-center justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 crt-flicker">
+      {/* RobCo Power-On Cathode Boot Sequence */}
+      {isBooting && <BootSequence onComplete={() => setIsBooting(false)} />}
+
       <TerminalContainer>
         <TerminalHeader />
+
+        {/* Mode Selector & Custom Ingestion Controls */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+          <ModeSelector
+            disabled={isTestStarted && !isTestFinished}
+            onHydrate={handleHydrate}
+            onSettingsChange={handleSettingsChange}
+          />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={restartTest}
+              className="px-3 py-1.5 rounded text-xs font-mono text-(--text-untyped) hover:text-(--text-correct) border border-(--border-accent) hover:border-(--text-correct) transition-all hover:crt-glow"
+              title="Restart test session and shuffle words (Shortcut: Tab + Enter)"
+            >
+              RESTART ⟳
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              disabled={isTestStarted && !isTestFinished}
+              className="px-3 py-1.5 rounded text-xs font-mono text-(--text-untyped) hover:text-(--text-correct) border border-(--border-accent) hover:border-(--text-correct) transition-all disabled:opacity-40"
+            >
+              + CUSTOM TEXT
+            </button>
+          </div>
+        </div>
+
+        {/* Truncation Notice Banner */}
+        {truncationNotice && (
+          <div className="bg-(--border-accent)/40 border border-(--text-correct) rounded p-2 mb-3 text-xs font-mono text-(--text-correct) crt-glow flex items-center justify-between">
+            <span>{truncationNotice}</span>
+            <button
+              onClick={() => setTruncationNotice(null)}
+              className="text-xs hover:underline text-(--text-untyped) ml-2"
+            >
+              [DISMISS]
+            </button>
+          </div>
+        )}
 
         {/* Live Metrics Display Bar */}
         <StatsBar
           wpm={wpm}
+          rawWpm={rawWpm}
           accuracy={accuracy}
           remainingSeconds={remainingSeconds}
           isTestStarted={isTestStarted && isRunning}
@@ -73,13 +179,20 @@ function App() {
           onResume={resumeTimer}
         />
       </TerminalContainer>
+
+      {/* Custom Text Ingestion Modal */}
+      <CustomTextModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onApplyCustomText={handleApplyCustomText}
+      />
     </main>
   );
 }
 
 /**
  * computeLiveStats
- * Computes standard 5-character WPM and Accuracy percentage.
+ * Computes standard 5-character Net WPM, Raw WPM, and Accuracy percentage (PRD Section 5).
  */
 function computeLiveStats(matrix: WordMatrixState[], elapsedSeconds: number) {
   let correctChars = 0;
@@ -97,10 +210,11 @@ function computeLiveStats(matrix: WordMatrixState[], elapsedSeconds: number) {
   }
 
   const elapsedMinutes = Math.max(0.001, elapsedSeconds / 60);
-  const wpm = Math.round((correctChars / 5) / elapsedMinutes);
+  const wpm = Math.round(correctChars / 5 / elapsedMinutes);
+  const rawWpm = Math.round(totalTypedChars / 5 / elapsedMinutes);
   const accuracy = totalTypedChars > 0 ? (correctChars / totalTypedChars) * 100 : 100;
 
-  return { wpm, accuracy };
+  return { wpm, rawWpm, accuracy };
 }
 
 export default App;

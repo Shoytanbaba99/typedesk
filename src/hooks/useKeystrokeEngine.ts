@@ -14,6 +14,7 @@ interface UseKeystrokeEngineOptions {
   isModalOpen?: boolean; // Modal guard to block typing when modals are open
   onFirstKeystroke?: () => void; // Trigger timer start
   onTestComplete?: (finalWords: WordMatrixState[]) => void;
+  onRestart?: () => void; // Quick restart shortcut callback triggered on Tab key
 }
 
 /**
@@ -27,6 +28,7 @@ export function useKeystrokeEngine({
   isModalOpen = false,
   onFirstKeystroke,
   onTestComplete,
+  onRestart,
 }: UseKeystrokeEngineOptions) {
   // Build initial word matrix state from words list
   const initializeMatrix = useCallback((list: string[]): WordMatrixState[] => {
@@ -78,6 +80,7 @@ export function useKeystrokeEngine({
 
   const onFirstKeystrokeRef = useRef(onFirstKeystroke);
   const onTestCompleteRef = useRef(onTestComplete);
+  const onRestartRef = useRef(onRestart);
 
   // Keep refs fresh without re-binding window listener
   useEffect(() => {
@@ -89,6 +92,7 @@ export function useKeystrokeEngine({
     isModalOpenRef.current = isModalOpen;
     onFirstKeystrokeRef.current = onFirstKeystroke;
     onTestCompleteRef.current = onTestComplete;
+    onRestartRef.current = onRestart;
   }, [
     wordMatrix,
     currentWordIdx,
@@ -98,18 +102,51 @@ export function useKeystrokeEngine({
     isModalOpen,
     onFirstKeystroke,
     onTestComplete,
+    onRestart,
   ]);
+
+  const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tabPressedRef = useRef<boolean>(false);
 
   // Main window.keydown event listener (Attached EXACTLY ONCE)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      const key = e.key;
+
+      // 1. Modal Guard: Reset Tab combo state immediately when any modal is open
+      if (isModalOpenRef.current) {
+        tabPressedRef.current = false;
+        return;
+      }
+
+      // 2. Tab + Enter Quick Restart Combo Shortcut (PRD Section 2)
+      if (key === "Tab") {
+        tabPressedRef.current = true;
+        if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
+        tabTimeoutRef.current = setTimeout(() => {
+          tabPressedRef.current = false;
+        }, 350); // Tight 350ms window for deliberate Tab + Enter combo
+        return;
+      }
+
+      if (key === "Enter") {
+        if (tabPressedRef.current) {
+          e.preventDefault();
+          tabPressedRef.current = false;
+          if (tabTimeoutRef.current) clearTimeout(tabTimeoutRef.current);
+          onRestartRef.current?.();
+        }
+        return;
+      }
+
+      // Any intermediate key press resets the Tab combo flag to prevent leakage into UI navigation
+      tabPressedRef.current = false;
+
       // 1. Guard against IME composition, Modal focus, or test completion
       if (e.isComposing || isModalOpenRef.current || isFinishedRef.current) return;
 
-      const key = e.key;
-
       // 2. Prevent default browser scrolling/navigation on shortcuts
-      if (key === " " || key === "Tab") {
+      if (key === " ") {
         e.preventDefault();
       }
 

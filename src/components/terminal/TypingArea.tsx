@@ -155,7 +155,6 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
         <Caret
           x={caretPos.x}
           y={caretPos.y}
-          width={metrics.charWidth}
           height={metrics.lineHeight}
           isIdle={!isTestStarted}
           isVisible={!isPaused && !isTestFinished}

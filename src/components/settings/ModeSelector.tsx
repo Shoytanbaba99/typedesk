@@ -16,7 +16,8 @@ export interface ModeSettings {
 
 interface ModeSelectorProps {
   disabled?: boolean; // True when typing test is actively running
-  onSettingsChange?: (settings: ModeSettings) => void;
+  onHydrate?: (settings: ModeSettings) => void; // Called once on initial mount to sync parent state
+  onSettingsChange?: (settings: ModeSettings) => void; // Called on user interaction to trigger restart
 }
 
 const DEFAULT_SETTINGS: ModeSettings = {
@@ -29,17 +30,17 @@ const DEFAULT_SETTINGS: ModeSettings = {
 /**
  * ModeSelector
  * RobCo Terminal mode toggle bar for Time, Word count, and Quote modes.
- * Clean React 19 prop invocation without ref indirection during render.
  */
 export const ModeSelector: React.FC<ModeSelectorProps> = ({ 
   disabled = false, 
+  onHydrate,
   onSettingsChange 
 }) => {
   const [settings, setSettings] = useLocalStorage<ModeSettings>('typedesk-mode-settings', DEFAULT_SETTINGS);
 
-  // Sync initial mount settings with parent component on load
+  // Sync initial mount settings with parent state on load (state-only, no restart side-effects)
   useEffect(() => {
-    onSettingsChange?.(settings);
+    onHydrate?.(settings);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -122,3 +122,35 @@
 .animate-caret-blink {
   animation: caret-blink 1.06s steps(1) infinite;
 }
+
+/* CRT 60Hz Refresh Micro Flicker */
+@keyframes crt-flicker {
+  0% { opacity: 0.985; }
+  50% { opacity: 1; }
+  100% { opacity: 0.985; }
+}
+
+.crt-flicker {
+  animation: crt-flicker 0.15s infinite;
+  pointer-events: none;
+}
+
+/* CRT Power-on Cathode Line Expansion */
+@keyframes crt-power-on {
+  0% {
+    transform: scaleY(0.005) scaleX(0);
+    filter: brightness(8);
+  }
+  50% {
+    transform: scaleY(0.005) scaleX(1);
+    filter: brightness(4);
+  }
+  100% {
+    transform: scaleY(1) scaleX(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-power-on {
+  animation: crt-power-on 0.5s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}

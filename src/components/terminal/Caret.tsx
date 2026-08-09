@@ -1,12 +1,11 @@
 import React from "react";
 
 interface CaretProps {
-  x: number; // Left offset in pixels relative to relative container
-  y: number; // Top offset in pixels relative to relative container
-  width: number; // Exact measured charWidth in pixels
-  height: number; // Exact measured lineHeight in pixels
-  isIdle?: boolean; // True when user pauses typing (triggers 530ms blink)
-  isVisible?: boolean; // False before test starts or on window blur
+  x: number; // Left coordinate in px
+  y: number; // Top coordinate in px
+  height: number; // Monospace line height in px
+  isIdle?: boolean; // True when user is inactive, triggers CRT pulse
+  isVisible?: boolean; // False when unfocused
   disableTransition?: boolean; // True on line-wraps to prevent diagonal gliding
 }
 
@@ -16,7 +15,7 @@ interface CaretProps {
  * Glides horizontally on same-line keypresses and jumps instantly on line wraps.
  */
 export const Caret: React.FC<CaretProps> = React.memo(
-  ({ x, y, width, height, isIdle = true, isVisible = true, disableTransition = false }) => {
+  ({ x, y, height, isIdle = true, isVisible = true, disableTransition = false }) => {
     return (
       <span
         className={`

@@ -19,6 +19,7 @@
 
 # production
 /build
+dist/
 
 # misc
 .DS_Store
@@ -52,7 +53,6 @@ next-env.d.ts
 .mentor/
 AGENTS.md
 CLAUDE.md
-.github/
 
 
 /src/generated/prisma

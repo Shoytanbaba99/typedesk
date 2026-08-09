@@ -53,6 +53,22 @@ function App() {
   // Target test duration (0 for word count or quote mode)
   const targetDuration = modeSettings.category === "time" ? modeSettings.time : 0;
 
+  // High-precision monotonic timer hook (defined before useKeystrokeEngine to pass pauseTimer)
+  const {
+    elapsedSeconds,
+    remainingSeconds,
+    isPaused,
+    startTimer,
+    pauseTimer,
+    resumeTimer,
+    resetTimer,
+  } = usePerformanceTimer({
+    duration: targetDuration,
+    onExpire: () => {
+      finishEngine();
+    },
+  });
+
   // Keystroke event engine hook
   const {
     wordMatrix,
@@ -70,6 +86,7 @@ function App() {
     modeCategory: modeSettings.category,
     onFirstKeystroke: () => startTimer(),
     onRestart: () => restartTest(),
+    onTestComplete: () => pauseTimer(),
     onKeyClick: playKeyClick,
     onErrorSound: playErrorSound,
     onCompleteSound: playCarriageBell,
@@ -77,19 +94,6 @@ function App() {
 
   // Derived state: Results modal is open when test is finished and user has not dismissed it
   const isResultsModalOpen = isTestFinished && !isResultsModalDismissed;
-
-  // High-precision monotonic timer hook
-  const {
-    elapsedSeconds,
-    remainingSeconds,
-    isPaused,
-    startTimer,
-    resumeTimer,
-    resetTimer,
-  } = usePerformanceTimer({
-    duration: targetDuration,
-    onExpire: finishEngine,
-  });
 
   // Reset entire test session (defined AFTER resetEngine & resetTimer are initialized)
   const restartTest = useCallback(() => {

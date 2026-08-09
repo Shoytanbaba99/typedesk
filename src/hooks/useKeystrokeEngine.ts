@@ -280,10 +280,11 @@ export function useKeystrokeEngine({
         }
 
         if (nextWIdx >= matrix.length) {
-          // Non-time mode complete
+          // Matrix word list complete
           setIsTestFinished(true);
           isFinishedRef.current = true;
           setWordMatrix(matrix);
+          if (onCompleteSoundRef.current) onCompleteSoundRef.current();
           if (onTestCompleteRef.current) onTestCompleteRef.current(matrix, keyErrorMapRef.current);
         } else {
           // Jump to first character of next word
@@ -323,9 +324,8 @@ export function useKeystrokeEngine({
           setCurrentCharIdx(nextCIdx);
           setWordMatrix(matrix);
 
-          // Auto-finish non-time mode tests when last character of final word is typed
+          // Auto-finish test when last character of final word in matrix is typed
           if (
-            modeCategoryRef.current !== "time" &&
             wIdx === matrix.length - 1 &&
             nextCIdx === currentWord.originalText.length
           ) {

@@ -20,11 +20,14 @@ A retro RobCo CRT terminal-inspired typing application built with React 19, Type
 
 ---
 
-## Custom Text & AI Prompt Template
+## Custom Text & AI Prompt Templates
 
-Typedesk supports custom text or JSON string arrays up to 500 words. You can use any AI assistant (ChatGPT, Claude, Gemini) to generate custom typing tests using this prompt template:
+Typedesk supports custom plain text (quotes, paragraphs, code) or JSON string arrays up to 500 words. You can paste any text directly into the **`+ CUSTOM TEXT`** modal, or use these AI prompts:
 
-### 🤖 Copy-Paste AI Prompt Template
+### 📖 Option A: Custom Quotes & Paragraphs (Plain Text)
+> *"Generate a 50-100 word inspiring philosophical quote or tech story for a typing test. Output plain text only."*
+
+### 🤖 Option B: Custom Word Lists (JSON Array)
 > *"Generate a JSON array containing 30-50 technical programming words or code keywords for a typing test. Format the response strictly as a valid JSON array of strings, like this: `[\"const\", \"async\", \"await\", \"promise\", \"interface\"]`."*
 
 ### 📋 Valid JSON Input Example

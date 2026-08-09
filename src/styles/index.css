@@ -41,13 +41,19 @@
 
   /* Theme 4: monastic-ledger (Scriptorium Codex - Parchment, Black & Red) */
   [data-theme="monastic-ledger"] {
-    --bg-main: #14110e; /* Deep oak desk mahogany */
+    --bg-main: #14110e; /* Deep oak desk mahogany page background */
     --bg-panel: #f4ece1; /* Aged vellum parchment paper pane */
-    --text-untyped: #4d4234; /* Crisp typewriter charcoal untyped text */
+    --text-untyped: #7a6b58; /* Muted warm charcoal untyped text */
     --text-correct: #1c1612; /* Deep medieval iron gall black ink */
     --text-error: #c82323; /* Vibrant rubricator crimson red error */
     --glow-color: transparent; /* Clean un-bloomed manuscript ink */
-    --border-accent: #bfa15f; /* Gold foil illuminated accent */
+    --border-accent: #c82323; /* Rubricator crimson red accent */
+  }
+
+  /* Suppress CRT scanlines and dark vignette shadows on Scriptorium Parchment Codex */
+  [data-theme="monastic-ledger"] .crt-vignette,
+  [data-theme="monastic-ledger"] .crt-scanlines {
+    display: none;
   }
 
   /* Theme 5: cyberpunk-edo (Neon Pink Cyberpunk) */

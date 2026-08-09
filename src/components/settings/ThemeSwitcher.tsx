@@ -30,7 +30,7 @@ export const ThemeSwitcher = () => {
   offset-1
                     ${
                       isActive
-                        ? "bg-(--border-accent) text-(--text-correct) font-bold crt-glow"
+                        ? "bg-(--text-correct) text-(--bg-main) font-bold shadow-xs"
                         : "text-(--text-untyped) hover:text-(--text-correct) hover:bg-(--bg-panel)"
                     }
                   `}

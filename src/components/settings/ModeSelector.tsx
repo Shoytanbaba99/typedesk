@@ -95,7 +95,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono transition-all duration-150
             focus-visible:outline-2 focus-visible:outline-(--text-correct)
             ${settings.category === 'time' 
-              ? 'text-(--text-correct) font-bold crt-glow' 
+              ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
               : 'text-(--text-untyped) hover:text-(--text-correct)'
             }
           `}
@@ -116,7 +116,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono transition-all duration-150
             focus-visible:outline-2 focus-visible:outline-(--text-correct)
             ${settings.category === 'words' 
-              ? 'text-(--text-correct) font-bold crt-glow' 
+              ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
               : 'text-(--text-untyped) hover:text-(--text-correct)'
             }
           `}
@@ -137,7 +137,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
             flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono transition-all duration-150
             focus-visible:outline-2 focus-visible:outline-(--text-correct)
             ${settings.category === 'quote' 
-              ? 'text-(--text-correct) font-bold crt-glow' 
+              ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
               : 'text-(--text-untyped) hover:text-(--text-correct)'
             }
           `}
@@ -164,7 +164,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
                 px-2 py-0.5 rounded text-xs font-mono transition-all duration-150
                 focus-visible:outline-2 focus-visible:outline-(--text-correct)
                 ${settings.time === t 
-                  ? 'text-(--text-correct) font-bold crt-glow bg-(--border-accent)' 
+                  ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
                   : 'text-(--text-untyped) hover:text-(--text-correct)'
                 }
               `}
@@ -189,7 +189,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
                 px-2 py-0.5 rounded text-xs font-mono transition-all duration-150
                 focus-visible:outline-2 focus-visible:outline-(--text-correct)
                 ${settings.words === w 
-                  ? 'text-(--text-correct) font-bold crt-glow bg-(--border-accent)' 
+                  ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
                   : 'text-(--text-untyped) hover:text-(--text-correct)'
                 }
               `}
@@ -214,7 +214,7 @@ export const ModeSelector: React.FC<ModeSelectorProps> = ({
                 px-2 py-0.5 rounded text-xs font-mono transition-all duration-150 capitalize
                 focus-visible:outline-2 focus-visible:outline-(--text-correct)
                 ${settings.quote === q 
-                  ? 'text-(--text-correct) font-bold crt-glow bg-(--border-accent)' 
+                  ? 'bg-(--text-correct) text-(--bg-main) font-bold shadow-xs' 
                   : 'text-(--text-untyped) hover:text-(--text-correct)'
                 }
               `}

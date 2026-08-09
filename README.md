@@ -2,7 +2,8 @@
 
 A retro RobCo CRT terminal-inspired typing application built with React 19, TypeScript, and Vite. Designed for layout stability, high-precision monotonic timing (`performance.now()`), and responsive keystroke handling.
 
-🚀 **Live Demo:** [https://shoytanbaba99.github.io/typedesk/](https://shoytanbaba99.github.io/typedesk/)
+🚀 **Live Demo:** [https://shoytanbaba99.github.io/typedesk/](https://shoytanbaba99.github.io/typedesk/)  
+📰 **Engineering Write-ups:** [Dev.to Article ↗](https://dev.to/shoytanbaba99/i-tried-to-build-monkeytype-to-learn-react-it-nearly-broke-me-58a9) · [Hashnode Post-Mortem ↗](https://hashnode.com/post/cmslpk29v00000bkp09kyg7s5)
 
 ![Typedesk RobCo CRT Terminal - Cold War Emerald Theme](./public/assets/Radar.png)
 
@@ -88,6 +89,8 @@ npm run preview
 I originally started this project to learn, master, and properly understand React, UI/UX design, and modern frontend development. As I built out the features, things like high-precision timing, zero-reflow line matrices, dynamic word streaming, SVG charts, and complex state synchronization quickly grew much more complicated than I expected and got over my head.
 
 To get the application finished and bring the retro CRT terminal idea to life without getting stuck forever, I leaned heavily on AI tools ("vibe coding") to help write and refactor the code. The app is fully working and deployed live, but I want to be honest that I am still learning and working to fully master all the React patterns and frontend architecture used in this project.
+
+Read the full engineering reflection on [Dev.to ↗](https://dev.to/shoytanbaba99/i-tried-to-build-monkeytype-to-learn-react-it-nearly-broke-me-58a9) and [Hashnode ↗](https://hashnode.com/post/cmslpk29v00000bkp09kyg7s5): [*"I Tried to Build Monkeytype to Learn React. It Nearly Broke Me."*]
 
 ---
 

@@ -132,7 +132,6 @@
 
 .crt-flicker {
   animation: crt-flicker 0.15s infinite;
-  pointer-events: none;
 }
 
 /* CRT Power-on Cathode Line Expansion */

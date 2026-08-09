@@ -28,15 +28,15 @@
     --border-accent: #3b2b15;
   }
 
-  /* Theme 3: bletchley-cipher (WWII Radar Oscilloscope) */
+  /* Theme 3: bletchley-cipher (Cold War Emerald Radar Oscilloscope) */
   [data-theme="bletchley-cipher"] {
-    --bg-main: #0f0e0a; /* Darkened brass-bakelite casing */
-    --bg-panel: #16140e; /* Golden cathode tube pane */
-    --text-untyped: #5c5238; /* Dim phosphor gold */
-    --text-correct: #ffd700; /* Bright gold cathode sweep trace */
-    --text-error: #ff2a4b; /* Signal anomaly emergency crimson */
-    --glow-color: #ffd700; /* Gold cathode halation bloom */
-    --border-accent: #8c733e; /* Brushed brass rule */
+    --bg-main: #07120e; /* Deep naval submarine radar room black */
+    --bg-panel: #0d1a15; /* Oscilloscope CRT glass pane */
+    --text-untyped: #1f4838; /* Dim radar grid coordinate lines */
+    --text-correct: #00ffd5; /* Electric Emerald/Cyan Phosphor Trace */
+    --text-error: #ff2a4b; /* Target Lock Emergency Crimson */
+    --glow-color: #00ffd5; /* Emerald Cathode Halation Bloom */
+    --border-accent: #15604a; /* Brushed emerald housing accent */
   }
 
   /* Theme 4: monastic-ledger (Scriptorium Codex) */

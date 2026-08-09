@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 interface BootSequenceProps {
   onComplete: () => void;
@@ -12,10 +12,14 @@ const BOOT_LINES = [
   "STATUS: SYSTEM READY_",
 ];
 
+const BOOT_SEEN_KEY = "typedesk_boot_seen";
+
 /**
  * BootSequence
- * Retro character-by-character typewriter RobCo CRT diagnostic boot sequence.
- * Auto-dismisses on completion.
+ * Fast, skippable RobCo CRT diagnostic boot sequence.
+ * - Plays ONCE per session (sessionStorage check).
+ * - Instant tap / keypress skip supported.
+ * - 12ms typing speed for snappy 800ms natural completion.
  */
 export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
   const [completedLines, setCompletedLines] = useState<string[]>([]);
@@ -23,12 +27,49 @@ export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
   const [currentLineIndex, setCurrentLineIndex] = useState<number>(0);
   const [isFinished, setIsFinished] = useState<boolean>(false);
 
+  // Skip boot sequence instantly and persist session flag
+  const skipBoot = useCallback(() => {
+    try {
+      sessionStorage.setItem(BOOT_SEEN_KEY, "true");
+    } catch {
+      // Ignore quota/private browsing errors
+    }
+    setIsFinished(true);
+    setTimeout(onComplete, 150);
+  }, [onComplete]);
+
+  // 1. Session Storage Guard: Skip instantly if boot was already seen this session
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(BOOT_SEEN_KEY) === "true") {
+        onComplete();
+      }
+    } catch {
+      // Ignore errors
+    }
+  }, [onComplete]);
+
+  // 2. Global Keydown & Click Skip Listeners
+  useEffect(() => {
+    const handleKeyOrClick = () => {
+      skipBoot();
+    };
+
+    window.addEventListener("keydown", handleKeyOrClick);
+    window.addEventListener("touchstart", handleKeyOrClick);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyOrClick);
+      window.removeEventListener("touchstart", handleKeyOrClick);
+    };
+  }, [skipBoot]);
+
+  // 3. Fast Typewriter Sequence (12ms / char)
   useEffect(() => {
     if (currentLineIndex >= BOOT_LINES.length) {
       const finishTimeout = setTimeout(() => {
-        setIsFinished(true);
-        setTimeout(onComplete, 350);
-      }, 400);
+        skipBoot();
+      }, 250);
       return () => clearTimeout(finishTimeout);
     }
 
@@ -45,21 +86,22 @@ export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
           setCompletedLines((prev) => [...prev, fullText]);
           setCurrentLineText("");
           setCurrentLineIndex((prev) => prev + 1);
-        }, 120);
+        }, 70);
       }
-    }, 22);
+    }, 12);
 
     return () => clearInterval(charTimer);
-  }, [currentLineIndex, onComplete]);
+  }, [currentLineIndex, skipBoot]);
 
   return (
     <div
-      className={`fixed inset-0 bg-black z-50 flex items-center justify-center p-6 font-mono transition-opacity duration-300 ${
+      onClick={skipBoot}
+      className={`fixed inset-0 bg-black/95 z-50 flex flex-col items-center justify-center p-6 font-mono transition-opacity duration-200 cursor-pointer select-none ${
         isFinished ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
     >
-      <div className="max-w-lg w-full bg-(--bg-panel) border-2 border-(--border-accent) rounded-lg p-6 shadow-2xl animate-power-on">
-        <div className="flex flex-col gap-2 text-xs sm:text-sm text-(--text-correct) crt-glow">
+      <div className="max-w-lg w-full bg-(--bg-panel) border-2 border-(--border-accent) rounded-lg p-6 shadow-2xl animate-power-on flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5 text-xs sm:text-sm text-(--text-correct) crt-glow">
           {completedLines.map((line, i) => (
             <p key={i} className="tracking-wide">
               {line}
@@ -71,6 +113,12 @@ export const BootSequence: React.FC<BootSequenceProps> = ({ onComplete }) => {
               <span className="inline-block w-2 h-4 bg-(--text-correct) ml-0.5 animate-pulse" />
             </p>
           )}
+        </div>
+
+        {/* Skip Hint Footer */}
+        <div className="pt-2 border-t border-(--border-accent)/30 flex items-center justify-between text-[10px] text-(--text-untyped) uppercase tracking-wider">
+          <span>[ROBCO SYSTEM BIOS]</span>
+          <span className="animate-pulse">[TAP OR PRESS ANY KEY TO SKIP_]</span>
         </div>
       </div>
     </div>

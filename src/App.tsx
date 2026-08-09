@@ -27,7 +27,7 @@ function App() {
   const [sessionKey, setSessionKey] = useState<number>(0);
   const [customWords, setCustomWords] = useState<string[] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [isResultsModalOpen, setIsResultsModalOpen] = useState<boolean>(false);
+  const [isResultsModalDismissed, setIsResultsModalDismissed] = useState<boolean>(false);
   const [isBooting, setIsBooting] = useState<boolean>(true);
   const [truncationNotice, setTruncationNotice] = useState<string | null>(null);
   const [wpmHistory, setWpmHistory] = useState<WpmHistoryPoint[]>([]);
@@ -62,11 +62,14 @@ function App() {
   } = useKeystrokeEngine({
     wordsList,
     sessionKey,
-    isModalOpen: isModalOpen || isResultsModalOpen || isBooting,
+    isModalOpen: isModalOpen || isBooting,
     modeCategory: modeSettings.category,
     onFirstKeystroke: () => startTimer(),
     onRestart: () => restartTest(),
   });
+
+  // Derived state: Results modal is open when test is finished and user has not dismissed it
+  const isResultsModalOpen = isTestFinished && !isResultsModalDismissed;
 
   // High-precision monotonic timer hook
   const {
@@ -87,7 +90,7 @@ function App() {
     resetEngine();
     setWpmHistory([]);
     lastSampleSecondRef.current = -1;
-    setIsResultsModalOpen(false);
+    setIsResultsModalDismissed(false);
     setSessionKey((prev) => prev + 1);
   }, [resetTimer, resetEngine]);
 
@@ -141,13 +144,6 @@ function App() {
       }
     }
   }, [isTestStarted, isTestFinished, elapsedSeconds, wpm, rawWpm]);
-
-  // Automatically open ResultsModal when test completes
-  useEffect(() => {
-    if (isTestFinished) {
-      setIsResultsModalOpen(true);
-    }
-  }, [isTestFinished]);
 
   return (
     <main className="min-h-screen bg-(--bg-main) flex items-center justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative">
@@ -231,7 +227,7 @@ function App() {
       {/* Test Completion Diagnostic Results Modal */}
       <ResultsModal
         isOpen={isResultsModalOpen}
-        onClose={() => setIsResultsModalOpen(false)}
+        onClose={() => setIsResultsModalDismissed(true)}
         onRestart={restartTest}
         wpm={wpm}
         rawWpm={rawWpm}

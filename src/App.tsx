@@ -44,6 +44,24 @@ function App() {
   // Target test duration (0 for word count or quote mode)
   const targetDuration = modeSettings.category === "time" ? modeSettings.time : 0;
 
+  // Keystroke event engine hook
+  const {
+    wordMatrix,
+    currentWordIdx,
+    currentCharIdx,
+    isTestStarted,
+    isTestFinished,
+    resetEngine,
+    finishEngine,
+  } = useKeystrokeEngine({
+    wordsList,
+    sessionKey,
+    isModalOpen: isModalOpen || isBooting,
+    modeCategory: modeSettings.category,
+    onFirstKeystroke: () => startTimer(),
+    onRestart: () => restartTest(),
+  });
+
   // High-precision monotonic timer hook
   const {
     elapsedSeconds,
@@ -55,17 +73,8 @@ function App() {
     resetTimer,
   } = usePerformanceTimer({
     duration: targetDuration,
+    onExpire: finishEngine,
   });
-
-  // Keystroke event engine hook
-  const { wordMatrix, currentWordIdx, currentCharIdx, isTestStarted, isTestFinished, resetEngine } =
-    useKeystrokeEngine({
-      wordsList,
-      sessionKey,
-      isModalOpen: isModalOpen || isBooting,
-      onFirstKeystroke: startTimer,
-      onRestart: () => restartTest(),
-    });
 
   // Reset entire test session (defined AFTER resetEngine & resetTimer are initialized)
   const restartTest = useCallback(() => {

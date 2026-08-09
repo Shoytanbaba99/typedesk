@@ -8,10 +8,13 @@ export interface WordMatrixState {
   hasError: boolean;
 }
 
+import { generateWords } from "../utils/wordGenerator";
+
 interface UseKeystrokeEngineOptions {
   wordsList: string[]; // List of words for current test session
   sessionKey?: number; // Primitive counter incremented on explicit test restart
   isModalOpen?: boolean; // Modal guard to block typing when modals are open
+  modeCategory?: "time" | "words" | "quote"; // Test category mode
   onFirstKeystroke?: () => void; // Trigger timer start
   onTestComplete?: (finalWords: WordMatrixState[]) => void;
   onRestart?: () => void; // Quick restart shortcut callback triggered on Tab key
@@ -26,6 +29,7 @@ export function useKeystrokeEngine({
   wordsList,
   sessionKey = 0,
   isModalOpen = false,
+  modeCategory = "time",
   onFirstKeystroke,
   onTestComplete,
   onRestart,
@@ -77,6 +81,7 @@ export function useKeystrokeEngine({
   const currentCharIdxRef = useRef<number>(0);
   const wordMatrixRef = useRef<WordMatrixState[]>(wordMatrix);
   const isModalOpenRef = useRef<boolean>(isModalOpen);
+  const modeCategoryRef = useRef(modeCategory);
 
   const onFirstKeystrokeRef = useRef(onFirstKeystroke);
   const onTestCompleteRef = useRef(onTestComplete);
@@ -90,6 +95,7 @@ export function useKeystrokeEngine({
     isStartedRef.current = isTestStarted;
     isFinishedRef.current = isTestFinished;
     isModalOpenRef.current = isModalOpen;
+    modeCategoryRef.current = modeCategory;
     onFirstKeystrokeRef.current = onFirstKeystroke;
     onTestCompleteRef.current = onTestComplete;
     onRestartRef.current = onRestart;
@@ -100,6 +106,7 @@ export function useKeystrokeEngine({
     isTestStarted,
     isTestFinished,
     isModalOpen,
+    modeCategory,
     onFirstKeystroke,
     onTestComplete,
     onRestart,
@@ -233,8 +240,28 @@ export function useKeystrokeEngine({
         matrix[wIdx] = currentWord;
 
         const nextWIdx = wIdx + 1;
+
+        // Dynamic infinite word append for Time Mode (PRD Section 3)
+        if (modeCategoryRef.current === "time" && nextWIdx >= matrix.length - 10) {
+          const freshWords = generateWords(25);
+          const appendedItems = freshWords.map((wordStr, idx) => {
+            const wordIdx = matrix.length + idx;
+            return {
+              wordId: wordIdx,
+              originalText: wordStr,
+              hasError: false,
+              characters: wordStr.split("").map((char, charIdx) => ({
+                id: `w${wordIdx}-c${charIdx}-${char}`,
+                char,
+                status: "pending" as const,
+              })),
+            };
+          });
+          matrix.push(...appendedItems);
+        }
+
         if (nextWIdx >= matrix.length) {
-          // Test Complete
+          // Non-time mode complete
           setIsTestFinished(true);
           isFinishedRef.current = true;
           setWordMatrix(matrix);
@@ -270,6 +297,17 @@ export function useKeystrokeEngine({
           const nextCIdx = cIdx + 1;
           setCurrentCharIdx(nextCIdx);
           setWordMatrix(matrix);
+
+          // Auto-finish non-time mode tests when last character of final word is typed
+          if (
+            modeCategoryRef.current !== "time" &&
+            wIdx === matrix.length - 1 &&
+            nextCIdx === currentWord.originalText.length
+          ) {
+            setIsTestFinished(true);
+            isFinishedRef.current = true;
+            if (onTestCompleteRef.current) onTestCompleteRef.current(matrix);
+          }
         } else if (cIdx < currentWord.originalText.length + 5) {
           // Append extra typed character beyond word length (max 5 extra chars)
           chars.push({
@@ -307,6 +345,13 @@ export function useKeystrokeEngine({
     isFinishedRef.current = false;
   }, [wordsList, initializeMatrix]);
 
+  // Explicit finish function (called by timer expiration or external trigger)
+  const finishEngine = useCallback(() => {
+    setIsTestFinished(true);
+    isFinishedRef.current = true;
+    if (onTestCompleteRef.current) onTestCompleteRef.current(wordMatrixRef.current);
+  }, []);
+
   return {
     wordMatrix,
     currentWordIdx,
@@ -314,5 +359,6 @@ export function useKeystrokeEngine({
     isTestStarted,
     isTestFinished,
     resetEngine,
+    finishEngine,
   };
 }

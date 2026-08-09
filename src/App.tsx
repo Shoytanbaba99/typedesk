@@ -153,7 +153,7 @@ function App() {
   }, [isTestStarted, isTestFinished, elapsedSeconds, wpm, rawWpm]);
 
   return (
-    <main className="min-h-screen bg-(--bg-main) flex items-center justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative">
+    <main className="min-h-dvh bg-(--bg-main) flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative">
       {/* Subtle CRT 60Hz Refresh Micro Flicker Overlay (pointer-events-none) */}
       <div className="fixed inset-0 crt-flicker pointer-events-none z-40" aria-hidden={true} />
 

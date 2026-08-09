@@ -40,6 +40,14 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
+  const hiddenInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus hidden input on touch/click to trigger mobile software keyboard
+  const handleAreaClick = () => {
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.focus();
+    }
+  };
 
   // Pre-measured font cell and container metrics
   const [metrics, setMetrics] = useState<{
@@ -128,10 +136,26 @@ export const TypingArea: React.FC<TypingAreaProps> = ({
   return (
     <div
       ref={containerRef}
-      className="relative w-full p-4 font-mono select-none overflow-hidden"
+      onClick={handleAreaClick}
+      className="relative w-full p-4 font-mono select-none overflow-hidden cursor-pointer"
       style={{ height: `${containerHeight}px` }}
       aria-label="Terminal typing workspace"
     >
+      {/* Hidden input used ONLY to trigger mobile software keyboard on touch */}
+      <input
+        ref={hiddenInputRef}
+        type="text"
+        className="absolute top-0 left-0 opacity-0 pointer-events-none w-0 h-0 -z-10"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        autoComplete="off"
+        tabIndex={-1}
+        aria-label="Mobile software keyboard trigger"
+        value=""
+        onChange={() => {}}
+      />
+
       {/* Hidden character span used ONLY for initial font metric measurement */}
       <span
         ref={measureRef}

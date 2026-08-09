@@ -16,7 +16,7 @@ interface UseKeystrokeEngineOptions {
   isModalOpen?: boolean; // Modal guard to block typing when modals are open
   modeCategory?: "time" | "words" | "quote"; // Test category mode
   onFirstKeystroke?: () => void; // Trigger timer start
-  onTestComplete?: (finalWords: WordMatrixState[]) => void;
+  onTestComplete?: (finalWords: WordMatrixState[], keyErrorMap: Record<string, number>) => void;
   onRestart?: () => void; // Quick restart shortcut callback triggered on Tab key
 }
 
@@ -82,6 +82,8 @@ export function useKeystrokeEngine({
   const wordMatrixRef = useRef<WordMatrixState[]>(wordMatrix);
   const isModalOpenRef = useRef<boolean>(isModalOpen);
   const modeCategoryRef = useRef(modeCategory);
+  const keyErrorMapRef = useRef<Record<string, number>>({});
+  const [keyErrorMap, setKeyErrorMap] = useState<Record<string, number>>({});
 
   const onFirstKeystrokeRef = useRef(onFirstKeystroke);
   const onTestCompleteRef = useRef(onTestComplete);
@@ -265,7 +267,7 @@ export function useKeystrokeEngine({
           setIsTestFinished(true);
           isFinishedRef.current = true;
           setWordMatrix(matrix);
-          if (onTestCompleteRef.current) onTestCompleteRef.current(matrix);
+          if (onTestCompleteRef.current) onTestCompleteRef.current(matrix, keyErrorMapRef.current);
         } else {
           // Jump to first character of next word
           setCurrentWordIdx(nextWIdx);
@@ -289,6 +291,9 @@ export function useKeystrokeEngine({
 
           if (!isCorrect) {
             currentWord.hasError = true;
+            const targetCharLower = expectedChar.toLowerCase();
+            keyErrorMapRef.current[targetCharLower] = (keyErrorMapRef.current[targetCharLower] || 0) + 1;
+            setKeyErrorMap({ ...keyErrorMapRef.current });
           }
 
           currentWord.characters = chars;
@@ -306,7 +311,7 @@ export function useKeystrokeEngine({
           ) {
             setIsTestFinished(true);
             isFinishedRef.current = true;
-            if (onTestCompleteRef.current) onTestCompleteRef.current(matrix);
+            if (onTestCompleteRef.current) onTestCompleteRef.current(matrix, keyErrorMapRef.current);
           }
         } else if (cIdx < currentWord.originalText.length + 5) {
           // Append extra typed character beyond word length (max 5 extra chars)
@@ -339,6 +344,8 @@ export function useKeystrokeEngine({
     setCurrentCharIdx(0);
     currentWordIdxRef.current = 0;
     currentCharIdxRef.current = 0;
+    keyErrorMapRef.current = {};
+    setKeyErrorMap({});
     setIsTestStarted(false);
     setIsTestFinished(false);
     isStartedRef.current = false;
@@ -349,7 +356,8 @@ export function useKeystrokeEngine({
   const finishEngine = useCallback(() => {
     setIsTestFinished(true);
     isFinishedRef.current = true;
-    if (onTestCompleteRef.current) onTestCompleteRef.current(wordMatrixRef.current);
+    if (onTestCompleteRef.current)
+      onTestCompleteRef.current(wordMatrixRef.current, keyErrorMapRef.current);
   }, []);
 
   return {
@@ -358,6 +366,7 @@ export function useKeystrokeEngine({
     currentCharIdx,
     isTestStarted,
     isTestFinished,
+    keyErrorMap,
     resetEngine,
     finishEngine,
   };

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { TerminalContainer } from "./components/terminal/TerminalContainer";
 import { TerminalHeader } from "./components/terminal/TerminalHeader";
 import { TypingArea } from "./components/terminal/TypingArea";
@@ -6,6 +6,8 @@ import { StatsBar } from "./components/terminal/StatsBar";
 import { ModeSelector, type ModeSettings } from "./components/settings/ModeSelector";
 import { CustomTextModal } from "./components/settings/CustomTextModal";
 import { BootSequence } from "./components/terminal/BootSequence";
+import { ResultsModal } from "./components/analytics/ResultsModal";
+import type { WpmHistoryPoint } from "./components/analytics/WpmPolylineGraph";
 import { useKeystrokeEngine, type WordMatrixState } from "./hooks/useKeystrokeEngine";
 import { usePerformanceTimer } from "./hooks/usePerformanceTimer";
 import {
@@ -25,8 +27,11 @@ function App() {
   const [sessionKey, setSessionKey] = useState<number>(0);
   const [customWords, setCustomWords] = useState<string[] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isResultsModalOpen, setIsResultsModalOpen] = useState<boolean>(false);
   const [isBooting, setIsBooting] = useState<boolean>(true);
   const [truncationNotice, setTruncationNotice] = useState<string | null>(null);
+  const [wpmHistory, setWpmHistory] = useState<WpmHistoryPoint[]>([]);
+  const lastSampleSecondRef = useRef<number>(-1);
 
   // Compute active word list matching mode selection or custom input
   const wordsList = useMemo(() => {
@@ -51,12 +56,13 @@ function App() {
     currentCharIdx,
     isTestStarted,
     isTestFinished,
+    keyErrorMap,
     resetEngine,
     finishEngine,
   } = useKeystrokeEngine({
     wordsList,
     sessionKey,
-    isModalOpen: isModalOpen || isBooting,
+    isModalOpen: isModalOpen || isResultsModalOpen || isBooting,
     modeCategory: modeSettings.category,
     onFirstKeystroke: () => startTimer(),
     onRestart: () => restartTest(),
@@ -79,6 +85,9 @@ function App() {
   const restartTest = useCallback(() => {
     resetTimer();
     resetEngine();
+    setWpmHistory([]);
+    lastSampleSecondRef.current = -1;
+    setIsResultsModalOpen(false);
     setSessionKey((prev) => prev + 1);
   }, [resetTimer, resetEngine]);
 
@@ -118,6 +127,27 @@ function App() {
   const { wpm, rawWpm, accuracy } = useMemo(() => {
     return computeLiveStats(wordMatrix, elapsedSeconds);
   }, [wordMatrix, elapsedSeconds]);
+
+  // Sample second-by-second WPM trajectory for SVG graph
+  useEffect(() => {
+    if (isTestStarted && !isTestFinished && elapsedSeconds > 0) {
+      const currentSec = Math.floor(elapsedSeconds);
+      if (currentSec > lastSampleSecondRef.current) {
+        lastSampleSecondRef.current = currentSec;
+        setWpmHistory((prev) => [
+          ...prev,
+          { second: currentSec, wpm, rawWpm, errors: 0 },
+        ]);
+      }
+    }
+  }, [isTestStarted, isTestFinished, elapsedSeconds, wpm, rawWpm]);
+
+  // Automatically open ResultsModal when test completes
+  useEffect(() => {
+    if (isTestFinished) {
+      setIsResultsModalOpen(true);
+    }
+  }, [isTestFinished]);
 
   return (
     <main className="min-h-screen bg-(--bg-main) flex items-center justify-center p-2 sm:p-6 md:p-8 transition-colors duration-200 relative">
@@ -196,6 +226,20 @@ function App() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onApplyCustomText={handleApplyCustomText}
+      />
+
+      {/* Test Completion Diagnostic Results Modal */}
+      <ResultsModal
+        isOpen={isResultsModalOpen}
+        onClose={() => setIsResultsModalOpen(false)}
+        onRestart={restartTest}
+        wpm={wpm}
+        rawWpm={rawWpm}
+        accuracy={accuracy}
+        elapsedSeconds={elapsedSeconds}
+        historyData={wpmHistory}
+        keyErrorMap={keyErrorMap}
+        wordMatrix={wordMatrix}
       />
     </main>
   );

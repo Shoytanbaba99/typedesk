@@ -66,7 +66,6 @@ function App() {
   const {
     elapsedSeconds,
     remainingSeconds,
-    isRunning,
     isPaused,
     startTimer,
     resumeTimer,
@@ -177,7 +176,7 @@ function App() {
           rawWpm={rawWpm}
           accuracy={accuracy}
           remainingSeconds={remainingSeconds}
-          isTestStarted={isTestStarted && isRunning}
+          isTestStarted={isTestStarted}
         />
 
         {/* Live Terminal Typing Engine Viewport */}

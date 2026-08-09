@@ -18,6 +18,9 @@ interface UseKeystrokeEngineOptions {
   onFirstKeystroke?: () => void; // Trigger timer start
   onTestComplete?: (finalWords: WordMatrixState[], keyErrorMap: Record<string, number>) => void;
   onRestart?: () => void; // Quick restart shortcut callback triggered on Tab key
+  onKeyClick?: () => void;
+  onErrorSound?: () => void;
+  onCompleteSound?: () => void;
 }
 
 /**
@@ -33,6 +36,9 @@ export function useKeystrokeEngine({
   onFirstKeystroke,
   onTestComplete,
   onRestart,
+  onKeyClick,
+  onErrorSound,
+  onCompleteSound,
 }: UseKeystrokeEngineOptions) {
   // Build initial word matrix state from words list
   const initializeMatrix = useCallback((list: string[]): WordMatrixState[] => {
@@ -88,6 +94,9 @@ export function useKeystrokeEngine({
   const onFirstKeystrokeRef = useRef(onFirstKeystroke);
   const onTestCompleteRef = useRef(onTestComplete);
   const onRestartRef = useRef(onRestart);
+  const onKeyClickRef = useRef(onKeyClick);
+  const onErrorSoundRef = useRef(onErrorSound);
+  const onCompleteSoundRef = useRef(onCompleteSound);
 
   // Keep refs fresh without re-binding window listener
   useEffect(() => {
@@ -101,6 +110,9 @@ export function useKeystrokeEngine({
     onFirstKeystrokeRef.current = onFirstKeystroke;
     onTestCompleteRef.current = onTestComplete;
     onRestartRef.current = onRestart;
+    onKeyClickRef.current = onKeyClick;
+    onErrorSoundRef.current = onErrorSound;
+    onCompleteSoundRef.current = onCompleteSound;
   }, [
     wordMatrix,
     currentWordIdx,
@@ -112,6 +124,9 @@ export function useKeystrokeEngine({
     onFirstKeystroke,
     onTestComplete,
     onRestart,
+    onKeyClick,
+    onErrorSound,
+    onCompleteSound,
   ]);
 
   const tabTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -184,6 +199,7 @@ export function useKeystrokeEngine({
 
       // A. BACKSPACE HANDLING (Atomic across word boundaries)
       if (key === "Backspace") {
+        if (onKeyClickRef.current) onKeyClickRef.current();
         if (cIdx > 0) {
           // Revert character within current word
           const targetIdx = cIdx - 1;
@@ -229,6 +245,7 @@ export function useKeystrokeEngine({
       // B. SPACE HANDLING (Validate current word and advance)
       if (key === " ") {
         if (cIdx === 0) return; // Ignore space at start of word
+        if (onKeyClickRef.current) onKeyClickRef.current();
 
         // Mark any remaining untyped letters in current word as incorrect
         for (let i = cIdx; i < chars.length; i++) {
@@ -294,6 +311,9 @@ export function useKeystrokeEngine({
             const targetCharLower = expectedChar.toLowerCase();
             keyErrorMapRef.current[targetCharLower] = (keyErrorMapRef.current[targetCharLower] || 0) + 1;
             setKeyErrorMap({ ...keyErrorMapRef.current });
+            if (onErrorSoundRef.current) onErrorSoundRef.current();
+          } else {
+            if (onKeyClickRef.current) onKeyClickRef.current();
           }
 
           currentWord.characters = chars;
@@ -311,9 +331,11 @@ export function useKeystrokeEngine({
           ) {
             setIsTestFinished(true);
             isFinishedRef.current = true;
+            if (onCompleteSoundRef.current) onCompleteSoundRef.current();
             if (onTestCompleteRef.current) onTestCompleteRef.current(matrix, keyErrorMapRef.current);
           }
         } else if (cIdx < currentWord.originalText.length + 5) {
+          if (onKeyClickRef.current) onKeyClickRef.current();
           // Append extra typed character beyond word length (max 5 extra chars)
           chars.push({
             id: `w${wIdx}-extra-${cIdx}-${key}`,
@@ -356,6 +378,7 @@ export function useKeystrokeEngine({
   const finishEngine = useCallback(() => {
     setIsTestFinished(true);
     isFinishedRef.current = true;
+    if (onCompleteSoundRef.current) onCompleteSoundRef.current();
     if (onTestCompleteRef.current)
       onTestCompleteRef.current(wordMatrixRef.current, keyErrorMapRef.current);
   }, []);

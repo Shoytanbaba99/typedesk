@@ -10,6 +10,7 @@ import { ResultsModal } from "./components/analytics/ResultsModal";
 import type { WpmHistoryPoint } from "./components/analytics/WpmPolylineGraph";
 import { useKeystrokeEngine, type WordMatrixState } from "./hooks/useKeystrokeEngine";
 import { usePerformanceTimer } from "./hooks/usePerformanceTimer";
+import { useSoundEffects } from "./hooks/useSoundEffects";
 import {
   generateWords,
   getQuoteByTier,
@@ -32,6 +33,9 @@ function App() {
   const [truncationNotice, setTruncationNotice] = useState<string | null>(null);
   const [wpmHistory, setWpmHistory] = useState<WpmHistoryPoint[]>([]);
   const lastSampleSecondRef = useRef<number>(-1);
+
+  // Web Audio API sound effects synthesizer hook (dynamically inspects live DOM data-theme)
+  const { isMuted, toggleMute, playKeyClick, playErrorSound, playCarriageBell } = useSoundEffects();
 
   // Compute active word list matching mode selection or custom input
   const wordsList = useMemo(() => {
@@ -66,6 +70,9 @@ function App() {
     modeCategory: modeSettings.category,
     onFirstKeystroke: () => startTimer(),
     onRestart: () => restartTest(),
+    onKeyClick: playKeyClick,
+    onErrorSound: playErrorSound,
+    onCompleteSound: playCarriageBell,
   });
 
   // Derived state: Results modal is open when test is finished and user has not dismissed it
@@ -154,7 +161,7 @@ function App() {
       {isBooting && <BootSequence onComplete={() => setIsBooting(false)} />}
 
       <TerminalContainer>
-        <TerminalHeader />
+        <TerminalHeader isMuted={isMuted} onToggleMute={toggleMute} />
 
         {/* Mode Selector & Custom Ingestion Controls */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">

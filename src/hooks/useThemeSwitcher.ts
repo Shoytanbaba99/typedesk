@@ -16,10 +16,10 @@ export interface ThemeMeta {
 
 export const THEME_LIST: ThemeMeta[] = [
   { id: "fallout-green", label: "FALLOUT", colorPreview: "#00FF66" },
-  { id: "wyse-amber", label: "WYSE", colorPreview: "#FFB000" },
+  { id: "wyse-amber", label: "WYSE", colorPreview: "#E6C07B" },
   { id: "bletchley-cipher", label: "RADAR", colorPreview: "#00FFD5" },
-  { id: "monastic-ledger", label: "CODEX", colorPreview: "#A62424" },
-  { id: "cyberpunk-edo", label: "CYBER", colorPreview: "#00E5FF" },
+  { id: "monastic-ledger", label: "CODEX", colorPreview: "#C82323" },
+  { id: "cyberpunk-edo", label: "CYBER", colorPreview: "#FF007F" },
 ];
 
 /**

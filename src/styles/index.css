@@ -17,15 +17,15 @@
     --border-accent: #1e3a28;
   }
 
-  /* Theme 2: wyse-amber (Wyse 50 Amber CRT) */
+  /* Theme 2: wyse-amber (Warm Obsidian Amber) */
   [data-theme="wyse-amber"] {
-    --bg-main: #0c0a07;
-    --bg-panel: #14100c;
-    --text-untyped: #543d1a;
-    --text-correct: #ffb000;
-    --text-error: #ff3300;
-    --glow-color: #ffb000;
-    --border-accent: #3b2b15;
+    --bg-main: #0d0d0d; /* Deep obsidian black */
+    --bg-panel: #141414; /* Recessed chassis pane */
+    --text-untyped: #b9986f; /* Warm parchment gold-tan */
+    --text-correct: #e6c07b; /* Luminous warm amber-gold */
+    --text-error: #e05252; /* Harmonious coral rust red error */
+    --glow-color: #e6c07b; /* Warm amber cathode halation bloom */
+    --border-accent: #4a3d2c; /* Brushed bronze housing accent */
   }
 
   /* Theme 3: bletchley-cipher (Cold War Emerald Radar Oscilloscope) */
@@ -39,26 +39,26 @@
     --border-accent: #15604a; /* Brushed emerald housing accent */
   }
 
-  /* Theme 4: monastic-ledger (Scriptorium Codex) */
+  /* Theme 4: monastic-ledger (Scriptorium Codex - Parchment, Black & Red) */
   [data-theme="monastic-ledger"] {
-    --bg-main: #14110e;
-    --bg-panel: #f4ece1;
-    --text-untyped: #7a6f60;
-    --text-correct: #a62424;
-    --text-error: #5c1d1d;
-    --glow-color: transparent;
-    --border-accent: #c9a24b;
+    --bg-main: #14110e; /* Deep oak desk mahogany */
+    --bg-panel: #f4ece1; /* Aged vellum parchment paper pane */
+    --text-untyped: #4d4234; /* Crisp typewriter charcoal untyped text */
+    --text-correct: #1c1612; /* Deep medieval iron gall black ink */
+    --text-error: #c82323; /* Vibrant rubricator crimson red error */
+    --glow-color: transparent; /* Clean un-bloomed manuscript ink */
+    --border-accent: #bfa15f; /* Gold foil illuminated accent */
   }
 
-  /* Theme 5: cyberpunk-edo (Neon Edo Ukiyo-e) */
+  /* Theme 5: cyberpunk-edo (Neon Pink Cyberpunk) */
   [data-theme="cyberpunk-edo"] {
-    --bg-main: #0d0f14;
-    --bg-panel: #161b24;
-    --text-untyped: #4a586e;
-    --text-correct: #00e5ff;
-    --text-error: #ff2e63;
-    --glow-color: #00e5ff;
-    --border-accent: #ff2e63;
+    --bg-main: #0e0318; /* Deep Neo-Tokyo obsidian night */
+    --bg-panel: #150624; /* Synthetic polycarbonate chassis */
+    --text-untyped: #4a2563; /* Dim neon violet untyped text */
+    --text-correct: #ff007f; /* Electric Hot Magenta / Neon Pink */
+    --text-error: #00f0ff; /* Neon Electric Cyan contrast error */
+    --glow-color: #ff007f; /* Neon Magenta Halation Bloom */
+    --border-accent: #6b0042; /* Brushed neon magenta housing accent */
   }
 
   .font-vt323 {
